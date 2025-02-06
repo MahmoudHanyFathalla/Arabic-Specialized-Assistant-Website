@@ -7,7 +7,7 @@ import json
 #http://127.0.0.1:8000/ask/
 #http://127.0.0.1:8000
 #ngrok http 8000
-#ngrok config add-authtoken 2jq8cK7a2v5DTnDz4dd5IsD2Mhf_5UA9Eftm1yKKj2R8MtGD5
+
 # Initialize FastAPI app
 app = FastAPI()
 
