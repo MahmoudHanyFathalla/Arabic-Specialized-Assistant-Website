@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Web Interface</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <img src="/static/img.png" alt="Logo" style="max-width: 200px; display: block; margin-left: auto; margin-right: auto;"/>
+
+        <h1>اسأل المساعد</h1>
+        <form action="/ask/" method="post">
+            <label for="prompt">السؤال:</label>
+            <input type="text" id="prompt" name="prompt" required>
+            <button type="submit">إرسال</button>
+            <button type="button" onclick="startRecognition()" id="startBtn">🎤 بدء التسجيل</button>
+            <button type="button" onclick="stopRecognition()" id="stopBtn" disabled>🛑 إيقاف التسجيل</button>
+        </form>
+
+        {% if response %}
+            <div id="response" class="response-container">
+                <h2>الإجابة:</h2>
+                <pre id="responseText">{{ response }}</pre>
+                <button type="button" onclick="speakResponse()">🔊 تشغيل الإجابة</button>
+                
+                {% if citations %}
+                    <h2>المصادر:</h2>
+                    <ul>
+                        {% for citation in citations %}
+                            <li>{{ citation }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        let recognition;
+        let isRecognizing = false;
+
+        // Speech recognition
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('المتصفح الخاص بك لا يدعم التعرف على الكلام.');
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ar-EG'; // Arabic language code
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+            recognition.continuous = true; // Ensures continuous recognition
+            isRecognizing = true;
+
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('prompt').value = transcript;
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Error occurred in recognition:', event.error);
+            };
+
+            recognition.onend = function() {
+                if (isRecognizing) {
+                    // Restart recognition if still recognizing
+                    recognition.start();
+                }
+            };
+
+            // Disable the start button and enable the stop button
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+        }
+
+        function stopRecognition() {
+            if (recognition) {
+                isRecognizing = false;
+                recognition.stop();
+            }
+
+            // Enable the start button and disable the stop button
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        // Text-to-speech in Arabic
+        function speakResponse() {
+            const responseText = document.getElementById('responseText').innerText;
+            const utterance = new SpeechSynthesisUtterance(responseText);
+            const voices = window.speechSynthesis.getVoices();
+            // Find an Arabic voice
+            const arabicVoice = voices.find(voice => voice.lang.startsWith('ar'));
+            if (arabicVoice) {
+                // Set the Arabic voice
+                utterance.voice = arabicVoice;
+            } else {
+                alert('Arabic voice not available in your browser.');
+            }
+            utterance.lang = 'ar-EG'; // Arabic language code
+            utterance.dir = 'rtl'; // Right-to-left text direction
+            window.speechSynthesis.speak(utterance);
+        }
+        function cleanResponseText() {
+            const responseElement = document.getElementById('responseText');
+            let responseText = responseElement.innerText;
+
+            // Remove any # or * characters from the response text
+            responseText = responseText.replace(/[#*]/g, '');
+
+            // Update the displayed response
+            responseElement.innerText = responseText;
+        }
+        window.onload = function() {
+            cleanResponseText(); // Call this function when the page loads
+            window.speechSynthesis.onvoiceschanged = function() {
+                // Voices are now loaded and available
+            };
+        };
+    </script>
+</body>
+</html>

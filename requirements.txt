@@ -1,0 +1,11 @@
+Python 3.8+
+
+FastAPI
+
+Uvicorn
+
+Jinja2
+
+OpenAI Python SDK
+
+Ngrok (optional for remote access)
